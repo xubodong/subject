@@ -1,17 +1,23 @@
 #include<stdio.h>
-#include<fcntl.h>
+#include<string.h>
 #include<sys/types.h>
 #include<sys/stat.h>
-#include<errno.h>
-#include<string.h>
-int main(int argc , char *argv[])
+#include<fcntl.h>
+#include<unistd.h>
+#include<dirent.h>
+int main(int argv,char *argc[])
 {
-int fd,len,i;
-char ch[30] = "o world !";
-fd =  open("ww.txt",O_CREAT|O_WRONLY,0777);
-perror("open");
-len = lseek(fd,0,SEEK_END);
-perror("lseek");
-write(fd,ch,strlen(ch));
-perror("write");
+char a[100];
+DIR *fp;
+struct dirent *p1;
+struct stat buf;
+fp = opendir(argc[1]);
+p1 = readdir(fp);
+printf("%s\n",p1->d_name);
+strcpy(a,argc[1]);
+strcat(a,"/");
+strcat(a,p1->d_name);
+stat(a,&buf);
+printf("%ld\n",buf.st_size);
+printf("%s\n",ctime(&buf.st_ctime));
 }
