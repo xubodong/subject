@@ -16,15 +16,14 @@
 #define PARAM_L    2                                                 
 #define PARAM_R    4
 #define MAXROWLEN 100 
-
+#define N        200 
+#define M        1500 
 int     g_leave_len = MAXROWLEN;
 int     g_maxlen;
-
 void my_err(const char *err_string, int line)
 {
     fprintf(stderr, "line:%d", line);
     perror(err_string);
-    exit(1);
 }
 
 void display_attribute (struct stat buf,char *name)
@@ -106,7 +105,7 @@ void display (int flag, char * pathname)
 {
     int           i,j;
     struct stat   buf;
-    char          name[4096 + 1];
+    char          name[300 + 1];
     for(i=0,j=0; i<strlen(pathname); i++)
     {
          if(pathname[i]=='/')
@@ -144,10 +143,52 @@ void display (int flag, char * pathname)
         }
 }
 
-    void qqsort(char (*s)[PATH_MAX+1], int left, int right)
+int my_strcmp(char *s,char *temp)
+{
+while(*s||*temp)
+{
+if(*s>='A'&&*s<='Z'&&*temp>='A'&&*temp<='Z')
+{    if(*s != *temp)
+          return (*s-*temp);
+}
+
+else if(*s>='A'&&*s<='Z')
+{
+if(*s +32 != *temp)
+return (*s+32-*temp);
+
+}
+
+else if(*temp >='A'&& *temp<='Z')
+{
+if(*s != *temp +32)
+return (*s-*temp+32);
+}
+
+else
+{
+if(*s != *temp )
+return (*s -*temp);
+}
+s++;
+temp++;
+
+}
+return 0;
+
+
+}
+
+
+
+
+
+
+
+    void qqsort(char **s, int left, int right)
       {
             int i,j,k,l;
-            char temp[1024],c[1024];
+            char temp[300],c[300];
             if(left>right)
                  return ;
              i = left;
@@ -155,9 +196,9 @@ void display (int flag, char * pathname)
              strcpy(temp,s[i]);
              while(i<j)
              {
-               while(strcmp(s[j],temp)>=0&&j>i)
+               while(my_strcmp(s[j],temp)>=0&&j>i)
                      j--;
-               while(strcmp(s[i],temp)<=0&&j>i)
+               while(my_strcmp(s[i],temp)<=0&&j>i)
                        i++;
                 if(j>i)
                  {
@@ -177,8 +218,12 @@ void display (int flag, char * pathname)
             DIR               *dir;
             struct dirent     *ptr;
             int               count = 0;      
-            char              filenames[256][4096+1],temp[4096 + 1];
+            char              **filenames,temp[N];
             struct stat       buf;
+            int ll;
+            filenames = (char**)malloc(M*sizeof(char *));
+            for(ll=0;ll<M;ll++)
+              filenames[ll] = (char *)malloc(N);
              dir = opendir (path);    
             if(dir == NULL)
              my_err("opendir",1);
@@ -190,10 +235,10 @@ void display (int flag, char * pathname)
              }
         closedir(dir); 
 
-        if(count>256)
+        if(count>M)
           my_err("too many files under this dir ",2);
         int i, j, k, len = strlen(path);
-          char cs[4096];
+          char cs[N];
          dir = opendir (path);
          for(i = 0; i<count; i++)
          {
@@ -205,43 +250,48 @@ void display (int flag, char * pathname)
             filenames[i][len+1]=0;
             strcat(filenames[i],ptr->d_name);
             filenames[i][len + strlen(ptr -> d_name)+1]=0;
+            
                 }
          
          qqsort(filenames,0,count-1);
-
+          for(i=count;i<512;i++)
+               free(filenames[i]);
 
          for(i=0;i<count; i++)
            display(flag_param,filenames[i]);
            if((flag_param & PARAM_L)==0)
              printf("\n");
+           if(flag_param & PARAM_R)
+              printf("\n");
          closedir(dir);
        dir=opendir(path);
          for(i=0;i<count; i++)
-            
 {           
-                   
-           for(j=0, k=0;filenames[i][j] && k<g_maxlen;j++)
+           for(j=0, k=0;filenames[i][j];j++)
             {  
                if(filenames[i][j]=='/')
                 {
                     k=0;
                     continue;
                 }
-                
                cs[k++]=filenames[i][j];
-} 
+        }
               cs[k] = 0;
             lstat(filenames[i],&buf);
-               if(S_ISDIR(buf.st_mode)&&(flag_param & PARAM_R)&&strcmp(cs,".")&&strcmp(cs,".."))
+               if(S_ISDIR(buf.st_mode)&&(flag_param & PARAM_R)&&strcmp(cs,".")&&strcmp(cs,"..")&&strcmp(cs,"disks")&&strcmp(cs,"ns")&&strcmp(filenames[i],"//proc/4884")&&strcmp(filenames[i],"//run/user/administrator"))
                {  
-                      g_maxlen=100; 
                         
                     if((flag_param & PARAM_A) || cs[0]!='.')
-                   {     
-                   printf("%s:\n",filenames[i]);
-                  display_dir(flag_param,filenames[i]);
-                          printf("%d\n",g_maxlen);
-}
+                   { 
+                   printf("%s:",filenames[i]);
+                     if((flag_param & PARAM_L))
+                       printf("\n");
+                    strcpy(temp,filenames[i]);
+          
+                    free(filenames[i]);
+                  display_dir(flag_param,temp);
+                    
+                   }
                 }
 }
            closedir(dir);
